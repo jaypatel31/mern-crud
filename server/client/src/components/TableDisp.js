@@ -11,6 +11,15 @@ import Paper from '@material-ui/core/Paper';
 import Button from '@material-ui/core/Button';
 import Modal from '@material-ui/core/Modal';
 import TextField from '@material-ui/core/TextField';
+import Snackbar from '@material-ui/core/Snackbar';
+import MuiAlert from '@material-ui/lab/Alert';
+import EditIcon from '@material-ui/icons/Edit';
+import DeleteIcon from '@material-ui/icons/Delete';
+import IconButton from '@material-ui/core/IconButton';
+
+const Alert = React.forwardRef(function Alert(props, ref) {
+  return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
+});
 
 function rand() {
   return Math.round(Math.random() * 20) - 10;
@@ -71,10 +80,14 @@ const StyledTableCell = withStyles((theme) => ({
   }));
 
 const TableDisp = () => {
-    const [users, setUsers] = useState("")
-
+    const [users, setUsers] = useState([])
+    const [name, setName] = useState("")
+    const [userName, setUserName] = useState("")
+    const [email, setEmail] = useState("")
+    const [phone, setPhone] = useState("")
     const [modalStyle] = React.useState(getModalStyle);
     const [open, setOpen] = React.useState(false);
+    const [snackOpen, setSnackOpen] = React.useState(false);
 
     const classes = useStyles();
 
@@ -84,6 +97,14 @@ const TableDisp = () => {
   
     const handleClose = () => {
       setOpen(false);
+    };
+
+    const snackClose = (event, reason) => {
+      if (reason === 'clickaway') {
+        return;
+      }
+  
+      setSnackOpen(false);
     };
 
     useEffect(() => {
@@ -97,17 +118,58 @@ const TableDisp = () => {
         })
     }, [])
 
+    const submitForm = (e)=>{
+      e.preventDefault()
+      if(!email || !name || !name || !userName){
+        setSnackOpen(true)
+        return
+      }
+      axios.post('/createuser',{
+        name,
+        username:userName,
+        email,
+        phone
+      },{
+        headers:{
+          "Content-Type":"application/json"
+        }
+      })
+      .then(response=>{
+        console.log(response.data)
+        
+        setUsers(prevstate=>{
+          return[
+            ...prevstate,
+            response.data.user
+          ]
+        })
+        setOpen(false);
+
+      })
+      .catch(e=>{
+        console.log(e)
+      })
+    }
+
     const body = (
       <div style={modalStyle} className={classes.paper}>
         <h2 id="simple-modal-title">Enter User Details</h2>
         <p id="simple-modal-description">
           <form className={classes.root} noValidate autoComplete="off">
-            <TextField id="standard-basic" label="Name"  className={classes.formElem}/>
-            <TextField id="standard-basic" label="User Name" className={classes.formElem}/>
-            <TextField id="standard-basic" label="Email" className={classes.formElem}/>
-            <TextField id="standard-basic" label="Phone" className={classes.formElem}/>
+            <TextField id="standard-basic" label="Name"  className={classes.formElem} defaultValue={name} onChange={(e)=>setName(e.target.value)}/>
+            <TextField id="standard-basic" label="User Name" className={classes.formElem} defaultValue={userName} onChange={(e)=>setUserName(e.target.value)}/>
+            <TextField id="standard-basic" label="Email" className={classes.formElem} defaultValue={email} onChange={(e)=>setEmail(e.target.value)}/>
+            <TextField id="standard-basic" label="Phone" className={classes.formElem} defaultValue={phone} onChange={(e)=>setPhone(e.target.value)}/>
+            <Button variant="contained" color="primary" className={classes.button} onClick={(e)=>submitForm(e)}>
+              Add User
+            </Button>
           </form>
         </p>
+        <Snackbar open={snackOpen} autoHideDuration={6000} onClose={snackClose}>
+          <Alert onClose={snackClose} severity="error" sx={{ width: '100%' }}>
+            Please fill all the fields!!
+          </Alert>
+        </Snackbar>
       </div>
     );
 
@@ -147,7 +209,13 @@ const TableDisp = () => {
                             <StyledTableCell align="center">{row.username}</StyledTableCell>
                             <StyledTableCell align="center">{row.email}</StyledTableCell>
                             <StyledTableCell align="center">{row.phone}</StyledTableCell>
-                            <StyledTableCell align="center">Buttons</StyledTableCell>
+                            <StyledTableCell align="center">
+                            <label htmlFor="icon-button-file">
+                              <IconButton color="primary" aria-label="upload picture" component="span">
+                                <EditIcon />
+                              </IconButton>
+                            </label>
+                            </StyledTableCell>
                         </StyledTableRow >
                     )):""}
                     </TableBody>
