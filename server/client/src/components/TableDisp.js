@@ -88,6 +88,8 @@ const TableDisp = () => {
     const [modalStyle] = React.useState(getModalStyle);
     const [open, setOpen] = React.useState(false);
     const [snackOpen, setSnackOpen] = React.useState(false);
+    const [editOpen, setEditOpen] = React.useState(false);
+    const [userId, setUserId] = React.useState("");
 
     const classes = useStyles();
 
@@ -97,6 +99,10 @@ const TableDisp = () => {
   
     const handleClose = () => {
       setOpen(false);
+    };
+
+    const editHandleClose = () => {
+      setEditOpen(false);
     };
 
     const snackClose = (event, reason) => {
@@ -151,6 +157,42 @@ const TableDisp = () => {
       })
     }
 
+    const submitEditForm = (e,userid)=>{
+      e.preventDefault()
+      console.log(userId)
+      if(!email || !name || !name || !userName){
+        setSnackOpen(true)
+        return
+      }
+      axios.put('/updateuser',{
+        name,
+        username:userName,
+        email,
+        phone,
+        userId
+      },{
+        headers:{
+          "Content-Type":"application/json"
+        }
+      })
+      .then(response=>{
+        console.log(response.data)
+        const newData = users.map(user=>{
+          if(user._id==response.data._id){
+            return response.data
+          }
+          return user
+        })
+        console.log(newData)
+        setUsers(newData);
+        setEditOpen(false);
+
+      })
+      .catch(e=>{
+        console.log(e)
+      })
+    }
+
     const body = (
       <div style={modalStyle} className={classes.paper}>
         <h2 id="simple-modal-title">Enter User Details</h2>
@@ -160,7 +202,7 @@ const TableDisp = () => {
             <TextField id="standard-basic" label="User Name" className={classes.formElem} defaultValue={userName} onChange={(e)=>setUserName(e.target.value)}/>
             <TextField id="standard-basic" label="Email" className={classes.formElem} defaultValue={email} onChange={(e)=>setEmail(e.target.value)}/>
             <TextField id="standard-basic" label="Phone" className={classes.formElem} defaultValue={phone} onChange={(e)=>setPhone(e.target.value)}/>
-            <Button variant="contained" color="primary" className={classes.button} onClick={(e)=>submitForm(e)}>
+            <Button variant="contained" color="primary" className={classes.button} onClick={(e)=>submitForm(e,userId)}>
               Add User
             </Button>
           </form>
@@ -173,8 +215,47 @@ const TableDisp = () => {
       </div>
     );
 
+    const editBody = (
+      <div style={modalStyle} className={classes.paper}>
+        <h2 id="simple-modal-title">Edit User Details</h2>
+        <p id="simple-modal-description">
+          <form className={classes.root} noValidate autoComplete="off">
+            <TextField id="standard-basic" label="Name"  className={classes.formElem} defaultValue={name} onChange={(e)=>setName(e.target.value)}/>
+            <TextField id="standard-basic" label="User Name" className={classes.formElem} defaultValue={userName} onChange={(e)=>setUserName(e.target.value)}/>
+            <TextField id="standard-basic" label="Email" className={classes.formElem} defaultValue={email} onChange={(e)=>setEmail(e.target.value)}/>
+            <TextField id="standard-basic" label="Phone" className={classes.formElem} defaultValue={phone} onChange={(e)=>setPhone(e.target.value)}/>
+            <Button variant="contained" color="primary" className={classes.button} onClick={(e)=>submitEditForm(e)}>
+              Edit User
+            </Button>
+          </form>
+        </p>
+        <Snackbar open={snackOpen} autoHideDuration={6000} onClose={snackClose}>
+          <Alert onClose={snackClose} severity="error" sx={{ width: '100%' }}>
+            Please fill all the fields!!
+          </Alert>
+        </Snackbar>
+      </div>
+    );
 
+    const setValue = (index)=>{
+      setName(users[index].name)
+      setUserName(users[index].username)
+      setEmail(users[index].email)
+      setPhone(users[index].phone)
+      setUserId(users[index]._id)
+      setEditOpen(true)
+    }
     
+    const deleteUser = (userId)=>{
+      axios.delete(`/deleteuser/${userId}`)
+      .then(response=>{
+        console.log(response)
+        const newData =  users.filter(user=>{
+          return user._id.toString() !== response.data.result._id.toString()
+        })
+        setUsers(newData)
+      })
+    }
 
     return (
         <div>
@@ -188,6 +269,14 @@ const TableDisp = () => {
             aria-describedby="simple-modal-description"
           >
             {body}
+          </Modal>
+          <Modal
+            open={editOpen}
+            onClose={editHandleClose}
+            aria-labelledby="simple-modal-title"
+            aria-describedby="simple-modal-description"
+          >
+            {editBody}
           </Modal>
             <TableContainer component={Paper} className={classes.container}>
                 <Table className={classes.table} aria-label="simple table">
@@ -211,8 +300,11 @@ const TableDisp = () => {
                             <StyledTableCell align="center">{row.phone}</StyledTableCell>
                             <StyledTableCell align="center">
                             <label htmlFor="icon-button-file">
-                              <IconButton color="primary" aria-label="upload picture" component="span">
+                              <IconButton color="primary" aria-label="upload picture" component="span" onClick={()=>setValue(index)}>
                                 <EditIcon />
+                              </IconButton>
+                              <IconButton color="primary" aria-label="upload picture" component="span" onClick={()=>deleteUser(row._id)}>
+                                <DeleteIcon />
                               </IconButton>
                             </label>
                             </StyledTableCell>

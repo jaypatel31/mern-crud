@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router()
 const mongoose = require('mongoose')
 const User = mongoose.model("User")
+const objectId = mongoose.Types.ObjectId
 
 router.get('/allusers',(req,res)=>{
     User.find()
@@ -43,7 +44,7 @@ router.put('/updateuser',(req,res)=>{
         return res.status(422).json({error:"Please fill all the details"})
     }
 
-    User.findOneAndUpdate({_id:userId},{
+    User.findOneAndUpdate({_id:new objectId(userId)},{
         $set:{name,username,email,phone}
     },{
         new:true
