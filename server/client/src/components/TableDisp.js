@@ -64,7 +64,9 @@ const StyledTableCell = withStyles((theme) => ({
         marginTop:"2rem"
     },
     button:{
-      marginTop:"5px"
+      marginTop:"5px",
+      marginRight:"5px",
+      position:"right"
     },
     paper: {
       position: 'absolute',
@@ -259,9 +261,11 @@ const TableDisp = () => {
 
     return (
         <div>
-          <Button variant="contained" color="secondary" className={classes.button} onClick={handleOpen}>
-            Add User
-          </Button>
+          <div style={{textAlign:"right"}}>
+            <Button variant="contained" color="secondary" className={classes.button} onClick={handleOpen}>
+              Add User
+            </Button>
+          </div>
           <Modal
             open={open}
             onClose={handleClose}
